@@ -261,3 +261,4 @@ dir.create("effort/specons")
 library(filesstrings)
 fList <- list.files(path='.',patter=glob2rx('*I*.csv'))
 file.move(fList,'./effort/')
+

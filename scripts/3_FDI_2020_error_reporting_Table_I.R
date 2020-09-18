@@ -181,4 +181,5 @@ addTables <- function(table){
 
 lapply(1:length(table.I.tables),function(x){addTables(table.I.tables[x])})
 
-saveWorkbook(wb, "Table.I.errors.Tor.3.2.xlsx")
+saveWorkbook(wb, "Table.I.checks.Tor.3.2.xlsx")
+  

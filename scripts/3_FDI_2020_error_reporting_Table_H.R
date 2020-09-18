@@ -135,8 +135,8 @@ setColumnWidth(sheet, colIndex=c(1:ncol(errors.unit.weight)), colWidth=16)
 # Add a plot into a worksheet
 # Create a new sheet in the workbook
 #++++++++++++++++++++++++++++++++++++
-missing.subregion <- table.H.errors[[3]]
-table.H.errors <- table.H.errors[-3]
+missing.subregion <- table.H.errors[[2]]
+table.H.errors <- table.H.errors[-2]
 missing.subregion <-
   missing.subregion[, list(totwghtlandg = sum(totwghtlandg),
                             nrows = .N),
@@ -223,4 +223,4 @@ table.H.tables <- lapply(table.H.errors,function(x){return(x <- x[,list(totwghtl
 
 lapply(1:length(table.H.tables),function(x){addTables(table.H.tables[x])})
 
-saveWorkbook(wb, "Table.H.errors.Tor.3.2.xlsx")
+saveWorkbook(wb, "Table.H.checks.Tor.3.2.xlsx")

@@ -52,7 +52,8 @@ fdi <- as.data.table(fdi)
 #   summarise(totwghtlandg=sum(totwghtlandg,na.rm=T))
 # fdidp<-ungroup(fdidp)
 
-fdi <- fdi[, .("totwghtlandg" = sum(totwghtlandg, na.rm = T)),
+fdi <- fdi[, .("totwghtlandg" = sum(totwghtlandg, na.rm = T),
+               "totvallandg" = sum(totvallandg, na.rm = T)),
     by = .(
       country,
       year,
@@ -66,12 +67,15 @@ fdi <- fdi[, .("totwghtlandg" = sum(totwghtlandg, na.rm = T)),
       confidential,
       valid
     )]
-fdiDT <- as.data.table(fdi)
-errors.unit.weight <- fdiDT[,.("totwghtlandg" = round(sum(totwghtlandg,na.rm = T),0)),
-                          by=.(country,year)]
-setorder(errors.unit.weight,country,year)
-# errors.unit.weightDT <- dcast(errors.unit.weight, country ~ year, value.var = "totwghtlandg")
-fwrite(errors.unit.weight,paste0(outPath,'errors.unit.weight.table.H.csv'))
+
+# fdiDT <- as.data.table(fdi)
+# errors.unit.weight.vallandg <- fdiDT[,.("totwghtlandg" = round(sum(totwghtlandg,na.rm = T),0),
+#                                         "totvallandg"  = round(sum(totvallandg, na.rm = T),0)),
+#                           by=.(country,year)]
+# setorder(errors.unit.weight,country,year)
+# # errors.unit.weightDT <- dcast(errors.unit.weight, country ~ year, value.var = "totwghtlandg")
+# fwrite(errors.unit.weight,paste0(outPath,'errors.unit.weight.value.table.H.csv'))
+
 # After a consultation with the group we omit the records form CYP for the extreme values
 # fdi <- fdi[!(country == "CYP" & year =='2017'),]
 
@@ -82,7 +86,7 @@ setwd(dataF)
 #Assign fishing zones to the fdi data
 fdi <- left_join(fdi,fishing_zones,by="sub_region")
 fdi<-data.table(fdi)
-fwrite(fdi[sub_region=="NK",.(nrows=.N),by=.(country,year,confidential,totwghtlandg,valid)],paste0(outPath,"missing.subregion.table.H.csv"))
+fwrite(fdi[sub_region=="NK",.(nrows=.N),by=.(country,year,confidential,totwghtlandg,totvallandg,valid)],paste0(outPath,"missing.subregion.table.H.csv"))
 
 #Remove rows with sub_region = NK and remove BSAs
 fdi<-fdi[!sub_region %in% c("NK","BSA")]
