@@ -35,7 +35,6 @@ i<-"table.H"
 
 fList <- list.files(path='.',pattern=glob2rx('table_h*'))
 fdi   <- rbindlist(lapply(fList,fread,stringsAsFactors=F)) 
-
 gc()
 #fdi            <- fread(paste(i,".csv", sep=''), stringsAsFactors = F)
 fdi.n<-nrow(fdi)
@@ -53,6 +52,14 @@ if("country_code" %in% colnames(fdi)){
 }
 fdi[,':='(rectangle_lat = as.numeric(rectangle_lat),
           rectangle_lon = as.numeric(rectangle_lon))]
+
+# Creating the table for checking unit weight and value
+errors.unit.weight.vallandg <- fdi[,.("totwghtlandg" = round(sum(totwghtlandg,na.rm = T),0),
+                                        "totvallandg"  = round(sum(as.numeric(totvallandg), na.rm = T),0)),
+                                     by=.(country,year)]
+setorder(errors.unit.weight.vallandg,country,year)
+# errors.unit.weightDT <- dcast(errors.unit.weight, country ~ year, value.var = "totwghtlandg")
+fwrite(errors.unit.weight.vallandg,paste0(outPath,'errors.unit.weight.value.table.H.csv'))
 
 # Number of NAs rectangle_type
 # na.rectangle_type<- fdi[is.na(rectangle_type),]
@@ -89,7 +96,7 @@ fdi.csq<-fdi[is.na(rectangle_lat) & is.na(rectangle_lon) & !is.na(c_square)]
 # Data subset having coords only
 fdi.coords<-fdi[!is.na(rectangle_lat) & !is.na(rectangle_lon) & is.na(c_square)]
 nrow(fdi)-nrow(fdi.coords)-nrow(fdi.csq)-nrow(fdi.csq.coords)
-fdi <- NULL;gc()
+#fdi <- NULL;gc()
 setwd(csqF)
 load(file = "grids.RData")
 csq05$geometry <- NULL
@@ -107,8 +114,8 @@ setwd(dataF)
 
 fdi.csq.coords<-fdi.csq.coords[valid=="YES",.(country,year,quarter,vessel_length,fishing_tech,gear_type,
                                    target_assemblage,mesh_size_range,metier,supra_region,
-                                   sub_region,eez_indicator,geo_indicator,specon_tech,deep,
-                                   rectangle_type,rectangle_lat,rectangle_lon,c_square,valid,totwghtlandg,
+                                   sub_region,eez_indicator,geo_indicator,specon_tech,deep,species,
+                                   rectangle_type,rectangle_lat,rectangle_lon,c_square,valid,totwghtlandg,totvallandg,
                                    confidential,id)]
 
 fdi.csq.coords$valid <- NA;gc()
@@ -118,8 +125,8 @@ gc()
 nrow(fdi.csq[is.na(csq_x),]) # the join was a 100% match
 fdi.csq<-fdi.csq[,.(country,year,quarter,vessel_length,fishing_tech,gear_type,
                                 target_assemblage,mesh_size_range,metier,supra_region,
-                                sub_region,eez_indicator,geo_indicator,specon_tech,deep,totwghtlandg,
-                                rectangle_type,csq_y,csq_x,c_square,
+                                sub_region,eez_indicator,geo_indicator,specon_tech,deep,species,
+                                rectangle_type,csq_y,csq_x,c_square,totwghtlandg,totvallandg,
                                 confidential,id)]
 setnames(fdi.csq,old = c("csq_y","csq_x"), new = c("rectangle_lat","rectangle_lon"))
 nrow(fdi.csq[is.na(rectangle_lon),])
@@ -200,7 +207,7 @@ cols <- names(fdi)
 # fwrite(fdi,'fdi.table.h.rbind.csv')
 fdi.no.csq <- fdi[!id%in%fdi.csq$id,]
 
-fdi <- rbind(fdi.csq[,!c("type","valid")],fdi.no.csq[,!c("totvallandg","species")])
+fdi <- rbind(fdi.csq[,!c("type","valid")],fdi.no.csq)
 fdi <- fdi[, valid := "Y"]
 fdi <- fdi[id %in% errors.ids, valid := "N"]
 
@@ -301,7 +308,7 @@ geartypeU             <- unique(fdi$gear_typeN)
 gclasses <- as.list(c("DREDGES", "HOOKS", "NETS", "SEINE", "sNETS", "TBBL120",
                       "TBBM120", "TBBNONE", "TRAPS", "TRAWLL100", "TRAWLM100",
                       "TRAWLNONE"))
-if(i == "TABLE_I") svalue <- "fishing_days=sum(totwghtlandg)" else svalue <- "landings=sum(totwghtlandg)"
+# if(i == "table.I") svalue <- "fishing_days=sum(totwghtlandg)" else svalue <- "landings=sum(totwghtlandg)"
 
 fdi <- fdi[gear_typeN %in% gclasses]
 
@@ -311,7 +318,9 @@ fdi <- fdi[gear_typeN %in% gclasses]
 #   summarise(value=eval(parse(text = svalue)))
 # fdi<-ungroup(fdi)
 
-fdi <- fdi[, eval(parse(text = svalue)), by = .(
+fdi <- fdi[, .("totwghtlandg" = sum(totwghtlandg, na.rm = T),
+                "totvallandg"  = sum(as.numeric(totvallandg), na.rm = T)),
+            by = .(
   country,
   year,
   quarter,
@@ -325,8 +334,9 @@ fdi <- fdi[, eval(parse(text = svalue)), by = .(
   confidential,
   valid
 )]
-fdi[,`:=`(totwghtlandg = V1,
-          V1 = NULL)]
+
+# fdi[,`:=`(totwghtlandg = V1,
+#           V1 = NULL)]
 setwd(dataF)
 save(fdi,file=paste("fdi_", i, ".RData", sep=''))
 fdi_TABLE_H_errors <- fdi[valid == 'N']
