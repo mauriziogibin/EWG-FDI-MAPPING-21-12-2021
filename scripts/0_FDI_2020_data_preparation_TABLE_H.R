@@ -17,6 +17,7 @@ library(data.table)
 library(sf)
 library(ggplot2)
 library(dplyr)
+rm(list=ls())
 
 cDIR = '~/work/EWG-FDI-20-10'
 setwd(cDIR)
@@ -59,7 +60,7 @@ errors.unit.weight.vallandg <- fdi[,.("totwghtlandg" = round(sum(totwghtlandg,na
                                      by=.(country,year)]
 setorder(errors.unit.weight.vallandg,country,year)
 # errors.unit.weightDT <- dcast(errors.unit.weight, country ~ year, value.var = "totwghtlandg")
-fwrite(errors.unit.weight.vallandg,paste0(outPath,'errors.unit.weight.value.table.H.csv'))
+# fwrite(errors.unit.weight.vallandg,paste0(outPath,'errors.unit.weight.value.table.H.csv'))
 
 # Number of NAs rectangle_type
 # na.rectangle_type<- fdi[is.na(rectangle_type),]
@@ -81,13 +82,13 @@ errors.one.coord <- fdi[is.na(rectangle_lon) != is.na(rectangle_lat)]
 # Number of rows with csquare only and wrong rect type
 errors.csq.rectangle_type <- fdi[is.na(rectangle_lon) & is.na(rectangle_lat)
                                      & !is.na(c_square) & rectangle_type != '05*05',]
-setwd(outPath)
-ifelse(nrow(errors.lat.lon.bounds)>0,fwrite(errors.lat.lon.bounds, "table.H.errors.lat.lon.bounds.csv"),'NO RECORDS')
-ifelse(nrow(errors.no.lat.lon.no.csq)>0,fwrite(errors.no.lat.lon.no.csq,"table.H.errors.no.lat.lon.no.csq.csv"),'NO RECORDS')
-ifelse(nrow(errors.rect.only)>0,fwrite(errors.rect.only,"table.H.errors.rect.only.csv"),'NO RECORDS')
-ifelse(nrow(errors.one.coord)>0,fwrite(errors.one.coord,"table.H.errors.one.coord.only.csv"),'NO RECORDS')
-ifelse(nrow(errors.csq.rectangle_type)>0,fwrite(errors.csq.rectangle_type,"table.H.errors.csq.rectangle_type.csv"),'NO RECORDS')
-setwd(dataF)
+# setwd(outPath)
+# ifelse(nrow(errors.lat.lon.bounds)>0,fwrite(errors.lat.lon.bounds, "table.H.errors.lat.lon.bounds.csv"),'NO RECORDS')
+# ifelse(nrow(errors.no.lat.lon.no.csq)>0,fwrite(errors.no.lat.lon.no.csq,"table.H.errors.no.lat.lon.no.csq.csv"),'NO RECORDS')
+# ifelse(nrow(errors.rect.only)>0,fwrite(errors.rect.only,"table.H.errors.rect.only.csv"),'NO RECORDS')
+# ifelse(nrow(errors.one.coord)>0,fwrite(errors.one.coord,"table.H.errors.one.coord.only.csv"),'NO RECORDS')
+# ifelse(nrow(errors.csq.rectangle_type)>0,fwrite(errors.csq.rectangle_type,"table.H.errors.csq.rectangle_type.csv"),'NO RECORDS')
+# setwd(dataF)
 
 # Data subset having csquares and coords
 fdi.csq.coords<-fdi[!is.na(rectangle_lat) & !is.na(rectangle_lon) & !is.na(c_square)]
@@ -109,7 +110,7 @@ nrow(fdi.csq.coords[valid=='YES',])
 nrow(fdi.csq.coords)- nrow(fdi.csq.coords[valid=='YES',]) # 5120 to omit
 errors.csq.coords <- fdi.csq.coords[is.na(valid),]
 setwd(outPath)
-fwrite(errors.csq.coords, "table.H.errors.csq.coords.csv")
+# fwrite(errors.csq.coords, "table.H.errors.csq.coords.csv")
 setwd(dataF)
 
 fdi.csq.coords<-fdi.csq.coords[valid=="YES",.(country,year,quarter,vessel_length,fishing_tech,gear_type,
@@ -174,7 +175,7 @@ points.on.land <- rbind(fdi.csq.on.land,
                         fdi.coords.on.land[,.SD,.SDcols = cols])
 
 setwd(outPath)
-fwrite(points.on.land, "table.H.points.on.land.csv")
+# fwrite(points.on.land, "table.H.points.on.land.csv")
 setwd(dataF)
 
 errors.csq.rectangle_type$valid <-'NO'
@@ -185,7 +186,7 @@ errors.csq.coords$valid         <-'NO'
 cols <- names(fdi)
 errors.rect.check <- fdi.coords[valid=='NO',]
 setwd(outPath)
-fwrite(errors.rect.check, "table.H.errors.rect.check.csv")
+# fwrite(errors.rect.check, "table.H.errors.rect.check.csv")
 setwd(dataF)
 
 errors.ids <- unique(
@@ -210,6 +211,9 @@ fdi.no.csq <- fdi[!id%in%fdi.csq$id,]
 fdi <- rbind(fdi.csq[,!c("type","valid")],fdi.no.csq)
 fdi <- fdi[, valid := "Y"]
 fdi <- fdi[id %in% errors.ids, valid := "N"]
+fwrite(fdi,'table_h_total_valid_and_not.csv')
+nrow(fdi[valid=='N'])
+nrow(fdi[valid=='N'])/nrow(fdi)*100
 
 setwd(outPath)
 # A bit of recap. We will create a table with the zero zero coords.
