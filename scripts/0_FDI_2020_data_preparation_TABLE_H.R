@@ -1,12 +1,12 @@
 #-------------------------------------------------------------------------------
 #
 # Script to clean, analyse and map the spatial effort and spatial landings
-# datasets of the FDI EWG18-11 20190910 - 20180914
-# Tor 3 team : Maciej, Maksims, Maurizio, Tommaso (3MT). Every 
+# datasets of the FDI EWG21-12 20210913 - 20210917
+# Tor 3 team : Maciej, Maksims, Maurizio, Stefanos. Every 
 # contribution is highlighted.
-# Contact: maurizio.gibin@ec.europa.eu
+# Contact: maurizio.gibin@gmail.com
 #
-# Date: 2018-09-10 - 2018-09-14
+# Date: 2021-09-13 - 2021-09-17
 #
 #
 #-------------------------------------------------------------------------------
@@ -19,7 +19,7 @@ library(ggplot2)
 library(dplyr)
 rm(list=ls())
 
-cDIR = '~/work/EWG-FDI-20-10'
+cDIR = '~/work/EWG-FDI-21-12'
 setwd(cDIR)
 #- Settings paths
 codePath         <- paste0(cDIR, "/scripts/")    # R scripts location
@@ -33,9 +33,10 @@ setwd(dataF)
 fnames <- c("TABLE_I", "TABLE_H")
 # for(i in fnames){
 i<-"table.H"
-
-fList <- list.files(path='.',pattern=glob2rx('table_h*'))
-fdi   <- rbindlist(lapply(fList,fread,stringsAsFactors=F)) 
+setwd('./original/')
+fList <- list.files(path='.',pattern=glob2rx('table_h_????.csv'))
+fdi   <- rbindlist(lapply(fList,fread,stringsAsFactors=F,nThread=3)) 
+setwd('../')
 gc()
 #fdi            <- fread(paste(i,".csv", sep=''), stringsAsFactors = F)
 fdi.n<-nrow(fdi)
@@ -43,7 +44,8 @@ fdi.n<-nrow(fdi)
 fdi[fdi=="NA"] <- NA
 gc()
 fdi[,c_square:=as.character(c_square)]
-fdi <- setorder(fdi,year,quarter)
+# Not sure about sorting now
+# fdi <- setorder(fdi,year,quarter)
 fdi[,id := 1:.N,]
 ###########################
 # MACIEK 2019 adjustments #
@@ -55,12 +57,12 @@ fdi[,':='(rectangle_lat = as.numeric(rectangle_lat),
           rectangle_lon = as.numeric(rectangle_lon))]
 
 # Creating the table for checking unit weight and value
-errors.unit.weight.vallandg <- fdi[,.("totwghtlandg" = round(sum(totwghtlandg,na.rm = T),0),
+table.unit.weight.vallandg <- fdi[,.("totwghtlandg" = round(sum(totwghtlandg,na.rm = T),0),
                                         "totvallandg"  = round(sum(as.numeric(totvallandg), na.rm = T),0)),
                                      by=.(country,year)]
-setorder(errors.unit.weight.vallandg,country,year)
+setorder(table.unit.weight.vallandg,country,year)
 # errors.unit.weightDT <- dcast(errors.unit.weight, country ~ year, value.var = "totwghtlandg")
-# fwrite(errors.unit.weight.vallandg,paste0(outPath,'errors.unit.weight.value.table.H.csv'))
+# fwrite(table.unit.weight.vallandg,paste0(outPath,'errors.unit.weight.value.table.H.csv'))
 
 # Number of NAs rectangle_type
 # na.rectangle_type<- fdi[is.na(rectangle_type),]
@@ -110,7 +112,11 @@ nrow(fdi.csq.coords[valid=='YES',])
 nrow(fdi.csq.coords)- nrow(fdi.csq.coords[valid=='YES',]) # 5120 to omit
 errors.csq.coords <- fdi.csq.coords[is.na(valid),]
 setwd(outPath)
-# fwrite(errors.csq.coords, "table.H.errors.csq.coords.csv")
+
+errors.csq.coords[,fwrite(.SD, paste0("table.H.errors.csq.coords",
+                                      "_",country,'.csv')),
+                          by=.(country)]
+
 setwd(dataF)
 
 fdi.csq.coords<-fdi.csq.coords[valid=="YES",.(country,year,quarter,vessel_length,fishing_tech,gear_type,
@@ -124,6 +130,7 @@ fdi.csq.coords$valid <- NA;gc()
 fdi.csq<-merge(fdi.csq,csq05[,c("cscode","type","csq_x","csq_y")], all.x=T,by.x="c_square", by.y="cscode")
 gc()
 nrow(fdi.csq[is.na(csq_x),]) # the join was a 100% match
+fdi.csq[is.na(csq_x),]
 fdi.csq<-fdi.csq[,.(country,year,quarter,vessel_length,fishing_tech,gear_type,
                                 target_assemblage,mesh_size_range,metier,supra_region,
                                 sub_region,eez_indicator,geo_indicator,specon_tech,deep,species,
@@ -175,7 +182,8 @@ points.on.land <- rbind(fdi.csq.on.land,
                         fdi.coords.on.land[,.SD,.SDcols = cols])
 
 setwd(outPath)
-# fwrite(points.on.land, "table.H.points.on.land.csv")
+points.on.land[,fwrite(.SD, paste0("table.H.points.on.land",'_',
+                       country,'.csv')),by=.(country)]
 setwd(dataF)
 
 errors.csq.rectangle_type$valid <-'NO'
@@ -186,7 +194,9 @@ errors.csq.coords$valid         <-'NO'
 cols <- names(fdi)
 errors.rect.check <- fdi.coords[valid=='NO',]
 setwd(outPath)
-# fwrite(errors.rect.check, "table.H.errors.rect.check.csv")
+errors.rect.check[,fwrite(.SD, paste0("table.H.errors.rect.check",'_',
+                                      country,'.csv')),
+                  by=.(country)]
 setwd(dataF)
 
 errors.ids <- unique(
@@ -208,7 +218,26 @@ cols <- names(fdi)
 # fwrite(fdi,'fdi.table.h.rbind.csv')
 fdi.no.csq <- fdi[!id%in%fdi.csq$id,]
 
+fdi <- NULL;gc()
+csq05 <- NULL;gc()
+csq05Land <- NULL;gc()
+errors.lat.lon.bounds<- NULL;gc()
+errors.no.lat.lon.no.csq<- NULL;gc()
+errors.one.coord<- NULL;gc()
+errors.rect.only<- NULL;gc()
+errors.csq.coords<- NULL;gc()
+errors.csq.rectangle_type<- NULL;gc()
+errors.rect.check<- NULL;gc()
+fdi.coords.on.land<- NULL;gc()
+fdi.csq.on.land<- NULL;gc()
+fdi.coords <- NULL;gc()
+fdi.csq.coords <- NULL;
+fdi.csq.coords.on.land <- NULL;gc()
+points.on.land <- NULL;gc()
+
 fdi <- rbind(fdi.csq[,!c("type","valid")],fdi.no.csq)
+fdi.csq <- NULL;
+fdi.no.csq <- NULL;
 fdi <- fdi[, valid := "Y"]
 fdi <- fdi[id %in% errors.ids, valid := "N"]
 fwrite(fdi,'table_h_total_valid_and_not.csv')
@@ -220,13 +249,17 @@ setwd(outPath)
 zero0           <- fdi[rectangle_lon == 0 & rectangle_lat == 0,] 
 # We find two unique countries: MLT and FRA. Ask
 unique(zero0$country)
-fwrite(zero0,paste('zero0Coords_', i, '.csv', sep=''))
+
+zero0[,fwrite(.SD,paste('zero0Coords_', i,country, '.csv', sep='')),by=.(country)]
+
 # We will now select the minus 1 minus 1 coords. It looks like for table I. It is only # HRV. It has been communicated adn uploaded on the ftp (together with the other tables).
 # Igor, the correposndent said that this 46 records represent a mistake and so we deleted them.
 minus1          <- fdi[(rectangle_lon == -1 & rectangle_lat == -1),]
 unique(minus1$country)
-fwrite(minus1,paste('Minus1-1_', i, '.csv', sep=''))
 
+minus1[,fwrite(.SD,paste('Minus1-1_', i,country, '.csv', sep='')),by=.(country)]
+
+gc()
 setwd(dataF)
 # List of the gears
 gearsFDI       <- unique(fdi$gear_type)
@@ -314,8 +347,11 @@ gclasses <- as.list(c("DREDGES", "HOOKS", "NETS", "SEINE", "sNETS", "TBBL120",
                       "TRAWLNONE"))
 # if(i == "table.I") svalue <- "fishing_days=sum(totwghtlandg)" else svalue <- "landings=sum(totwghtlandg)"
 
-fdi <- fdi[gear_typeN %in% gclasses]
-
+#fdi <- 
+fdi.gearNOTingclasses <- fdi[!gear_typeN %in% gclasses]
+fdi[,fwrite(.SD,paste0('table_h_gear_not_in_gear_classes','_',
+                       country)),by=.(country)]
+fdi <- fdi[gear_typeN %in% gclasses,]
 # fdi <- fdi %>%
 #   group_by(country, year, quarter, gear_typeN, specon_tech, sub_region, rectangle_type, 
 #            rectangle_lat, rectangle_lon, confidential) %>%
@@ -344,6 +380,7 @@ fdi <- fdi[, .("totwghtlandg" = sum(totwghtlandg, na.rm = T),
 setwd(dataF)
 save(fdi,file=paste("fdi_", i, ".RData", sep=''))
 fdi_TABLE_H_errors <- fdi[valid == 'N']
-fwrite(fdi_TABLE_H_errors,'../output/fdi_TABLE_H_errors.csv')
+fdi_TABLE_H_errors[,fwrite(.SD,paste0('../output/fdi_TABLE_H_errors','_',
+                                      country,'.csv')),by=.(country)]
 rm(list=ls())
 gc()
