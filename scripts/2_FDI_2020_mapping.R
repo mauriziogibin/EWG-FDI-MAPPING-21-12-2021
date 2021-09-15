@@ -1,15 +1,16 @@
 #-------------------------------------------------------------------------------
 #
-# Script to clean, analyse and map the spatial effort and spatial totwghtlandg
-# datasets of the FDI EWG18-11 20190910 - 20180914
-# Tor 3 team : Maciej, Maksims, Maurizio, Tommaso (3MT). Every 
+# Script to clean, analyse and map the spatial effort and spatial landings
+# datasets of the FDI EWG21-12 20210913 - 20210917
+# Tor 3 team : Maciej, Maksims, Maurizio, Stefanos. Every 
 # contribution is highlighted.
-# Contact: maurizio.gibin@ec.europa.eu
+# Contact: maurizio.gibin@gmail.com
 #
-# Date: 2018-09-10 - 2018-09-14
+# Date: 2021-09-13 - 2021-09-17
 #
 #
 #-------------------------------------------------------------------------------
+
 #########
 #Maksims#
 #########
@@ -22,7 +23,7 @@ library(dplyr)
 rm(list=ls())
 # cDir <- setwd("~Work=-/FDI2018/")
 
-cDIR = '~/work/EWG-FDI-20-10'
+cDIR = '~/work/EWG-FDI-21-12'
 setwd(cDIR)
 #- Settings paths
 codePath         <- paste0(cDIR, "/scripts/")    # R scripts location
