@@ -26,7 +26,7 @@ options(digits = 9)
 rm(list=ls())
 #- Settings paths
 
-cDIR = '~/work/EWG-FDI-20-10'
+cDIR = '~/work/EWG-FDI-21-12'
 setwd(cDIR)
 #- Settings paths
 codePath         <- paste0(cDIR, "/scripts/")    # R scripts location
@@ -43,7 +43,7 @@ setwd(dataF)
 ####################
 #Maciej 19.09.2019 #
 ####################
-load(file="fdi_table.H.RData")
+load(file="fdi_Table.H.RData")
 
 fdi <- as.data.table(fdi)
 # fdidp <- fdi %>%
@@ -281,6 +281,6 @@ dir.create("landings/errors")
 dir.create("landings/gears")
 dir.create("landings/specons")
 
-library(filesstrings)
-fList <- list.files(path='.',patter=glob2rx('*H*.csv'))
-file.move(fList,'./landings/')
+fList <- list.files(path='.',pattern=glob2rx('*H*.csv'))
+file.copy(fList,'./landings/')
+file.remove(fList)
