@@ -32,7 +32,7 @@ setwd(dataF)
 # Loading the spatial effort and landings data from ftp
 fnames <- c("TABLE_I", "TABLE_H")
 # for(i in fnames){
-i<-"table.H"
+i<-"Table.H"
 setwd('./original/')
 fList <- list.files(path='.',pattern=glob2rx('table_h_????.csv'))
 fdi   <- rbindlist(lapply(fList,fread,stringsAsFactors=F,nThread=3)) 
@@ -62,7 +62,7 @@ table.unit.weight.vallandg <- fdi[,.("totwghtlandg" = round(sum(totwghtlandg,na.
                                      by=.(country,year)]
 setorder(table.unit.weight.vallandg,country,year)
 # errors.unit.weightDT <- dcast(errors.unit.weight, country ~ year, value.var = "totwghtlandg")
-# fwrite(table.unit.weight.vallandg,paste0(outPath,'errors.unit.weight.value.table.H.csv'))
+# fwrite(table.unit.weight.vallandg,paste0(outPath,'errors.unit.weight.value.Table.H.csv'))
 
 # Number of NAs rectangle_type
 # na.rectangle_type<- fdi[is.na(rectangle_type),]
@@ -84,13 +84,24 @@ errors.one.coord <- fdi[is.na(rectangle_lon) != is.na(rectangle_lat)]
 # Number of rows with csquare only and wrong rect type
 errors.csq.rectangle_type <- fdi[is.na(rectangle_lon) & is.na(rectangle_lat)
                                      & !is.na(c_square) & rectangle_type != '05*05',]
-# setwd(outPath)
-# ifelse(nrow(errors.lat.lon.bounds)>0,fwrite(errors.lat.lon.bounds, "table.H.errors.lat.lon.bounds.csv"),'NO RECORDS')
-# ifelse(nrow(errors.no.lat.lon.no.csq)>0,fwrite(errors.no.lat.lon.no.csq,"table.H.errors.no.lat.lon.no.csq.csv"),'NO RECORDS')
-# ifelse(nrow(errors.rect.only)>0,fwrite(errors.rect.only,"table.H.errors.rect.only.csv"),'NO RECORDS')
-# ifelse(nrow(errors.one.coord)>0,fwrite(errors.one.coord,"table.H.errors.one.coord.only.csv"),'NO RECORDS')
-# ifelse(nrow(errors.csq.rectangle_type)>0,fwrite(errors.csq.rectangle_type,"table.H.errors.csq.rectangle_type.csv"),'NO RECORDS')
-# setwd(dataF)
+# SAVING ----
+setwd(outPath)
+ifelse(nrow(errors.lat.lon.bounds)>0,
+       errors.lat.lon.bounds[,fwrite(.SD, paste0("Table.H.errors.lat.lon.bounds","_",country,'.csv')),by=.(country)],
+       'NO RECORDS')
+ifelse(nrow(errors.no.lat.lon.no.csq)>0,
+       errors.no.lat.lon.no.csq[,fwrite(.SD, paste0("Table.H.errors.no.lat.lon.no.csq","_",country,'.csv')),by=.(country)],'NO RECORDS')
+ifelse(nrow(errors.rect.only)>0,
+       errors.rect.only[,fwrite(.SD, paste0("Table.H.errors.rect.only","_",country,'.csv')),by=.(country)],
+       'NO RECORDS')
+ifelse(nrow(errors.one.coord)>0,
+       errors.one.coord[,fwrite(.SD, paste0("Table.H.errors.one.coord.only","_",country,'.csv')),by=.(country)],
+       'NO RECORDS')
+ifelse(nrow(errors.csq.rectangle_type)>0,
+       errors.csq.rectangle_type[,fwrite(.SD,paste0("Table.H.errors.csq.rectangle_type","_",country,'.csv')),by=.(country)],
+       'NO RECORDS')
+
+setwd(dataF)
 
 # Data subset having csquares and coords
 fdi.csq.coords<-fdi[!is.na(rectangle_lat) & !is.na(rectangle_lon) & !is.na(c_square)]
@@ -111,12 +122,12 @@ nrow(fdi.csq.coords[valid=='YES',])
 # Number of records omitted
 nrow(fdi.csq.coords)- nrow(fdi.csq.coords[valid=='YES',]) # 5120 to omit
 errors.csq.coords <- fdi.csq.coords[is.na(valid),]
+# SAVING ----
+
 setwd(outPath)
-
-errors.csq.coords[,fwrite(.SD, paste0("table.H.errors.csq.coords",
-                                      "_",country,'.csv')),
-                          by=.(country)]
-
+ifelse(nrow(errors.csq.coords)>0,
+       errors.csq.coords[,fwrite(.SD, paste0("Table.H.errors.csq.coords","_",country,'.csv')),by=.(country)],
+       'NO RECORDS')
 setwd(dataF)
 
 fdi.csq.coords<-fdi.csq.coords[valid=="YES",.(country,year,quarter,vessel_length,fishing_tech,gear_type,
@@ -181,9 +192,12 @@ cols <- names(fdi.coords.on.land)[names(fdi.coords.on.land)%in% names(fdi.csq.on
 points.on.land <- rbind(fdi.csq.on.land,
                         fdi.coords.on.land[,.SD,.SDcols = cols])
 
+
+# SAVING ----
 setwd(outPath)
-points.on.land[,fwrite(.SD, paste0("table.H.points.on.land",'_',
-                       country,'.csv')),by=.(country)]
+ifelse(nrow(points.on.land)>0,
+       points.on.land[,fwrite(.SD, paste0("Table.H.points.on.land","_",country,'.csv')),by=.(country)],
+       'NO RECORDS')
 setwd(dataF)
 
 errors.csq.rectangle_type$valid <-'NO'
@@ -193,10 +207,12 @@ errors.csq.coords$valid         <-'NO'
 # At the end we have the following errors
 cols <- names(fdi)
 errors.rect.check <- fdi.coords[valid=='NO',]
+
+# SAVING ----
 setwd(outPath)
-errors.rect.check[,fwrite(.SD, paste0("table.H.errors.rect.check",'_',
-                                      country,'.csv')),
-                  by=.(country)]
+ifelse(nrow(errors.rect.check)>0,
+       errors.rect.check[,fwrite(.SD, paste0("Table.H.errors.rect.check","_",country,'.csv')),by=.(country)],
+       'NO RECORDS')
 setwd(dataF)
 
 errors.ids <- unique(
@@ -214,8 +230,8 @@ errors.ids <- unique(
 )
 
 cols <- names(fdi)
-# fwrite(fdi.csq,'fdi.csq.table.h.csv')
-# fwrite(fdi,'fdi.table.h.rbind.csv')
+# fwrite(fdi.csq,'fdi.csq.Table.H.csv')
+# fwrite(fdi,'fdi.Table.H.rbind.csv')
 fdi.no.csq <- fdi[!id%in%fdi.csq$id,]
 
 fdi <- NULL;gc()
@@ -240,7 +256,9 @@ fdi.csq <- NULL;
 fdi.no.csq <- NULL;
 fdi <- fdi[, valid := "Y"]
 fdi <- fdi[id %in% errors.ids, valid := "N"]
+
 fwrite(fdi,'table_h_total_valid_and_not.csv')
+
 nrow(fdi[valid=='N'])
 nrow(fdi[valid=='N'])/nrow(fdi)*100
 
@@ -249,15 +267,18 @@ setwd(outPath)
 zero0           <- fdi[rectangle_lon == 0 & rectangle_lat == 0,] 
 # We find two unique countries: MLT and FRA. Ask
 unique(zero0$country)
-
-zero0[,fwrite(.SD,paste('zero0Coords_', i,country, '.csv', sep='')),by=.(country)]
-
 # We will now select the minus 1 minus 1 coords. It looks like for table I. It is only # HRV. It has been communicated adn uploaded on the ftp (together with the other tables).
 # Igor, the correposndent said that this 46 records represent a mistake and so we deleted them.
 minus1          <- fdi[(rectangle_lon == -1 & rectangle_lat == -1),]
-unique(minus1$country)
 
-minus1[,fwrite(.SD,paste('Minus1-1_', i,country, '.csv', sep='')),by=.(country)]
+# SAVING ----
+setwd(outPath)
+ifelse(nrow(zero0)>0,
+       zero0[,fwrite(.SD, paste0("Table.H.zero0","_",country,'.csv')),by=.(country)],
+       'NO RECORDS')
+ifelse(nrow(minus1)>0,
+       minus1[,fwrite(.SD, paste0("Table.H.minus1","_",country,'.csv')),by=.(country)],
+       'NO RECORDS')
 
 gc()
 setwd(dataF)
@@ -348,9 +369,14 @@ gclasses <- as.list(c("DREDGES", "HOOKS", "NETS", "SEINE", "sNETS", "TBBL120",
 # if(i == "table.I") svalue <- "fishing_days=sum(totwghtlandg)" else svalue <- "landings=sum(totwghtlandg)"
 
 #fdi <- 
-fdi.gearNOTingclasses <- fdi[!gear_typeN %in% gclasses]
-fdi[,fwrite(.SD,paste0('table_h_gear_not_in_gear_classes','_',
-                       country)),by=.(country)]
+gearNOTingclasses <- fdi[!gear_typeN %in% gclasses]
+# SAVING ----
+setwd(outPath)
+ifelse(nrow(gearNOTingclasses)>0,
+       gearNOTingclasses[,fwrite(.SD, paste0("Table.H.gearNOTingclasses","_",country,'.csv')),by=.(country)],
+       'NO RECORDS')
+setwd(dataF)
+
 fdi <- fdi[gear_typeN %in% gclasses,]
 # fdi <- fdi %>%
 #   group_by(country, year, quarter, gear_typeN, specon_tech, sub_region, rectangle_type, 
@@ -377,10 +403,12 @@ fdi <- fdi[, .("totwghtlandg" = sum(totwghtlandg, na.rm = T),
 
 # fdi[,`:=`(totwghtlandg = V1,
 #           V1 = NULL)]
+# SAVING ----
 setwd(dataF)
 save(fdi,file=paste("fdi_", i, ".RData", sep=''))
-fdi_TABLE_H_errors <- fdi[valid == 'N']
-fdi_TABLE_H_errors[,fwrite(.SD,paste0('../output/fdi_TABLE_H_errors','_',
-                                      country,'.csv')),by=.(country)]
+
+# fdi_TABLE_H_errors <- fdi[valid == 'N']
+# fdi_TABLE_H_errors[,fwrite(.SD,paste0('../output/fdi_TABLE_H_errors','_',
+#                                      country,'.csv')),by=.(country)]
 rm(list=ls())
 gc()
