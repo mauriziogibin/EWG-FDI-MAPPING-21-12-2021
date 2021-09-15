@@ -1,12 +1,12 @@
 #-------------------------------------------------------------------------------
 #
 # Script to clean, analyse and map the spatial effort and spatial landings
-# datasets of the FDI EWG18-11 20190910 - 20180914
-# Tor 3 team : Maciej, Maksims, Maurizio, Tommaso (3MT). Every 
+# datasets of the FDI EWG21-12 20210913 - 20210917
+# Tor 3 team : Maciej, Maksims, Maurizio, Stefanos. Every 
 # contribution is highlighted.
-# Contact: maurizio.gibin@ec.europa.eu
+# Contact: maurizio.gibin@gmail.com
 #
-# Date: 2018-09-10 - 2018-09-14
+# Date: 2021-09-13 - 2021-09-17
 #
 #
 #-------------------------------------------------------------------------------
@@ -23,7 +23,7 @@ options(digits = 9)
 #- Clear workspace
 rm(list=ls())
 
-cDIR = '~/work/EWG-FDI-20-10'
+cDIR = '~/work/EWG-FDI-21-12'
 setwd(cDIR)
 #- Settings paths
 codePath         <- paste0(cDIR, "/scripts/")    # R scripts location
@@ -36,15 +36,19 @@ outPath          <- paste0(cDIR, "/output/")   # output
 setwd(dataF)
 # Loading the spatial effort and landings data from ftp
 fnames <- c("TABLE_I", "TABLE_H")
+i<-"Table.I"
+
 # for(i in fnames){
-i<-"table_i"
-fdi            <- fread(paste(i,".csv", sep=''), stringsAsFactors = F)
-i <- "table.I"
+setwd('./original/')
+fList <- list.files(path='.',pattern=glob2rx('table_i_????.csv'))
+fdi   <- rbindlist(lapply(fList,fread,stringsAsFactors=F,nThread=3)) 
+setwd('../')
+gc()
 fdi.n<-nrow(fdi)
 # Converting NA text to NA value
 fdi[fdi=="NA"] <- NA
 fdi[,c_square:=as.character(c_square)]
-fdi <- setorder(fdi,year,quarter)
+#fdi <- setorder(fdi,year,quarter)
 fdi[,id := 1:.N,]
 ###########################
 # MACIEK 2019 adjustments #
@@ -75,13 +79,24 @@ errors.one.coord <- fdi[is.na(rectangle_lon) != is.na(rectangle_lat)]
 # Number of rows with csquare only and wrong rect type
 errors.csq.rectangle_type <- fdi[is.na(rectangle_lon) & is.na(rectangle_lat)
                                      & !is.na(c_square) & rectangle_type != '05*05',]
-# setwd(outPath)
-# ifelse(nrow(errors.lat.lon.bounds)>0,fwrite(errors.lat.lon.bounds, "table.I.errors.lat.lon.bounds.csv"),'NO RECORDS')
-# ifelse(nrow(errors.no.lat.lon.no.csq)>0,fwrite(errors.no.lat.lon.no.csq, "table.I.errors.no.lat.lon.no.csq.csv"),'NO RECORDS')
-# ifelse(nrow(errors.rect.only)>0,fwrite(errors.rect.only, "table.I.errors.rect.only.csv"),'NO RECORDS')
-# ifelse(nrow(errors.one.coord)>0,fwrite(errors.one.coord, "table.I.errors.one.coord.only.csv"),'NO RECORDS')
-# ifelse(nrow(errors.csq.rectangle_type)>0,fwrite(errors.csq.rectangle_type,"table.I.errors.csq.rectangle_type.csv"),'NO RECORDS')
-# setwd(dataF)
+# SAVING ----
+setwd(outPath)
+ifelse(nrow(errors.lat.lon.bounds)>0,
+errors.lat.lon.bounds[,fwrite(.SD, paste0("Table.I.errors.lat.lon.bounds","_",country,'.csv')),by=.(country)],
+'NO RECORDS')
+ifelse(nrow(errors.no.lat.lon.no.csq)>0,
+errors.no.lat.lon.no.csq[,fwrite(.SD, paste0("Table.I.errors.no.lat.lon.no.csq","_",country,'.csv')),by=.(country)],'NO RECORDS')
+ifelse(nrow(errors.rect.only)>0,
+errors.rect.only[,fwrite(.SD, paste0("Table.I.errors.rect.only","_",country,'.csv')),by=.(country)],
+'NO RECORDS')
+ifelse(nrow(errors.one.coord)>0,
+errors.one.coord[,fwrite(.SD, paste0("Table.I.errors.one.coord.only","_",country,'.csv')),by=.(country)],
+'NO RECORDS')
+ifelse(nrow(errors.csq.rectangle_type)>0,
+errors.csq.rectangle_type[,fwrite(.SD,paste0("Table.I.errors.csq.rectangle_type","_",country,'.csv')),by=.(country)],
+'NO RECORDS')
+
+setwd(dataF)
 
 # Data subset having csquares only
 fdi.csq<-fdi[is.na(rectangle_lat) & is.na(rectangle_lon) & !is.na(c_square)]
@@ -113,8 +128,12 @@ nrow(fdi.csq.coords[valid=='YES',])
 # Number of records omitted
 nrow(fdi.csq.coords)- nrow(fdi.csq.coords[valid=='YES',]) # 878 to omit
 errors.csq.coords <- fdi.csq.coords[is.na(valid),]
+
+# SAVING ----
 setwd(outPath)
-# fwrite(errors.csq.coords, "table.I.errors.csq.coords.csv")
+ifelse(nrow(errors.csq.coords)>0,
+errors.csq.coords[,fwrite(.SD, paste0("Table.I.errors.csq.coords","_",country,'.csv')),by=.(country)],
+'NO RECORDS')
 setwd(dataF)
 
 fdi.csq.coords<-fdi.csq.coords[valid=="YES",.(country,year,quarter,vessel_length,fishing_tech,gear_type,
@@ -174,8 +193,12 @@ fdi.coords.on.land <- fdi.coords.on.land[,lapply(.SD,as.character)]
 cols <- names(fdi.coords.on.land)[names(fdi.coords.on.land)%in% names(fdi.csq.on.land)]
 
 points.on.land <- rbind(fdi.csq.on.land,fdi.coords.on.land[,.SD,.SDcols = cols])
+
+# SAVING ----
 setwd(outPath)
-# fwrite(points.on.land, "table.I.points.on.land.csv")
+ifelse(nrow(points.on.land)>0,
+points.on.land[,fwrite(.SD, paste0("Table.I.points.on.land","_",country,'.csv')),by=.(country)],
+'NO RECORDS')
 setwd(dataF)
 
 errors.csq.rectangle_type$valid <-'NO'
@@ -185,8 +208,12 @@ errors.csq.coords$valid         <-'NO'
 # At the end we have the following errors
 cols <- names(fdi)
 errors.rect.check <- fdi.coords[valid=='NO',]
+
+# SAVING ----
 setwd(outPath)
-# fwrite(errors.rect.check, "table.I.errors.rect.check.csv")
+ifelse(nrow(errors.rect.check)>0,
+errors.rect.check[,fwrite(.SD, paste0("Table.I.errors.rect.check","_",country,'.csv')),by=.(country)],
+'NO RECORDS')
 setwd(dataF)
 
 errors.ids <- unique(
@@ -219,9 +246,16 @@ unique(zero0$country)
 # Igor, the correposndent said that this 46 records represent a mistake and so we deleted them.
 minus1          <- fdi[(rectangle_lon == -1 & rectangle_lat == -1),]
 unique(minus1$country)
+
+
+# SAVING ----
 setwd(outPath)
-fwrite(zero0,paste('zero0Coords_', i, '.csv', sep=''))
-fwrite(minus1,paste('Minus1-1_', i, '.csv', sep=''))
+ifelse(nrow(zero0)>0,
+zero0[,fwrite(.SD, paste0("Table.I.zero0","_",country,'.csv')),by=.(country)],
+'NO RECORDS')
+ifelse(nrow(minus1)>0,
+minus1[,fwrite(.SD, paste0("Table.I.minus1","_",country,'.csv')),by=.(country)],
+'NO RECORDS')
 
 setwd(dataF)
 # List of the gears
@@ -308,9 +342,18 @@ geartypeU             <- unique(fdi$gear_typeN)
 gclasses <- as.list(c("DREDGES", "HOOKS", "NETS", "SEINE", "sNETS", "TBBL120",
                       "TBBM120", "TBBNONE", "TRAPS", "TRAWLL100", "TRAWLM100",
                       "TRAWLNONE"))
-if(i == "table.I") svalue <- "fishing_days=sum(totfishdays)" else svalue <- "landings=sum(totwghtlandg)"
+if(i == "Table.I") svalue <- "fishing_days=sum(totfishdays)" else svalue <- "landings=sum(totwghtlandg)"
 
-fdi <- fdi[gear_typeN %in% gclasses]
+gearNOTingclasses <- fdi[!gear_typeN %in% gclasses]
+
+# SAVING ----
+setwd(outPath)
+ifelse(nrow(gearNOTingclasses)>0,
+gearNOTingclasses[,fwrite(.SD, paste0("Table.I.gearNOTingclasses","_",country,'.csv')),by=.(country)],
+'NO RECORDS')
+setwd(dataF)
+
+fdi <- fdi[gear_typeN %in% gclasses,]
 
 # fdi <- fdi %>%
 #   group_by(country, year, quarter, gear_typeN, specon_tech, sub_region, rectangle_type,
@@ -360,13 +403,18 @@ fdi <-
   )]
 fdi[,`:=`(totfishdays = V1,
           V1 = NULL)]
+# SAVING ----
 setwd(dataF)
 save(fdi,file=paste("fdi_", i, ".RData", sep=''))
-fdi_TABLE_I_errors <- fdi[valid == 'N']
-fwrite(fdi_TABLE_I_errors,'../output/fdi_TABLE_I_errors.csv')
+#fdi_TABLE_I_errors <- fdi[valid == 'N']
+
+# SAVING ----
+#fwrite(fdi_TABLE_I_errors,'../output/fdi_TABLE_I_errors.csv')
 save(fdi.tableau,file = paste("fdi_Tableau_", i, ".RData", sep=''))
+
 rm(list=ls())
 gc()
-fdi_table_i_errors <- fread('../output/effort/fdi_TABLE_I_errors.csv')
-fdi_table_i <- load('fdi_table.I.RData')
-fdi_orig <- fread('table_i.csv')
+#fdi_table_i_errors <- fread('../output/fdi_TABLE_I_errors.csv')
+#fdi_table_i <- load('fdi_table.I.RData')
+#fdi_orig <- fread('table_i.csv')
+
