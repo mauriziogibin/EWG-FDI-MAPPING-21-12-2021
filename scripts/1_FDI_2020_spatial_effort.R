@@ -24,6 +24,7 @@ options(digits = 9)
 
 #- Clear workspace
 rm(list=ls())
+gc()
 #- Settings paths
 
 cDIR = '~/work/EWG-FDI-21-12'
@@ -58,7 +59,7 @@ fdi<-ungroup(fdi)
 
 #Loading the file with subregions assigned to fishing zones
 setwd(fshzn)
-fishing_zones           <- fread("fishing_zones_2019.csv", stringsAsFactors = F)
+fishing_zones           <- fread("fishing_zones_2021.csv", stringsAsFactors = F)
 setwd(dataF)
 #Assign fishing zones to the fdi data
 fdi <- left_join(fdi,fishing_zones,by="sub_region")
