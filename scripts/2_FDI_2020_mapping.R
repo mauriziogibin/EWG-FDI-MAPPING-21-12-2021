@@ -377,4 +377,3 @@ for(i in gr){
   fname <- paste(getwd(),"/landings/gears/", i, "_log_of_landings.png", sep = "")
   ggsave(filename=fname, plot=d1)
 }
-
