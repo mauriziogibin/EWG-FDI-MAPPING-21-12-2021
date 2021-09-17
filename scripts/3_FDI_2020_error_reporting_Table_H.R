@@ -266,3 +266,11 @@ table.H.tables <- lapply(table.H.errors,function(x){return(x <- x[,list(totwghtl
 lapply(1:length(table.H.tables),function(x){addTables(table.H.tables[x])})
 
 saveWorkbook(wb, "Table.H.checks.Tor.3.3.xlsx")
+
+table.h.total <- fread('../../data/table_h_total_valid_and_not.csv')
+nrow(table.h.total[valid=='N',])
+# Number of non valid rows
+nrow(table.h.total[valid=='N',])
+# Percentage
+round((nrow(table.h.total[valid=='N',])/
+         nrow(table.h.total)*100),2)
