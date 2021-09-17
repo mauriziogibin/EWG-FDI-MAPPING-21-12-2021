@@ -84,7 +84,7 @@ missing.subregion <-
 table.I.errors <- Map(cbind,table.I.errors,valid ="N")
 table.I.errors <- lapply(table.I.errors,function(x){return(x[,.(country,year,totfishdays)])})
 table.I.tables <- lapply(table.I.errors,function(x){return(x <- x[,list(totfishdays = sum(totfishdays),
-                                                                        nrows = .N),
+                                                                        nrows = nrow(.SD)),
                                                                by = .(country,year)])})
 missing.subregion[,totfishdays:=round(totfishdays,0)]
 names(missing.subregion) <- c("Country", "Year", "Fishing days", "Number of rows")
@@ -106,41 +106,41 @@ TABLE_COLNAMES_STYLE <- CellStyle(wb) + Font(wb, isBold=TRUE) +
   Border(color="black", position=c("TOP", "BOTTOM"), 
          pen=c("BORDER_THIN", "BORDER_THICK")) 
 
-errors.total <- fread('fdi_TABLE_I_errors.csv')
-errors.total <- errors.total[,.(country,year,totfishdays)]
-errors.total <- errors.total[, list(totfishdays = sum(totfishdays),
-                                    nrows = nrow(.SD)),
-                             by = .(country, year)]
-errors.total[,totfishdays := round(totfishdays,0)]
-errors.total <- setorder(errors.total,country)
-names(errors.total) <- c("Country", "Year", "Fishing days", "Number of rows")
-
-# Create a new sheet in the workbook
-#++++++++++++++++++++++++++++++++++++
-sheet <- createSheet(wb, sheetName = "Table I Errors")
-
-xlsx.addTitle<-function(sheet, rowIndex, title, titleStyle){
-  rows <-createRow(sheet,rowIndex=rowIndex)
-  sheetTitle <-createCell(rows, colIndex=1)
-  setCellValue(sheetTitle[[1,1]], title)
-  setCellStyle(sheetTitle[[1,1]], titleStyle)
-}
-
-# Add title
-xlsx.addTitle(sheet, rowIndex=1, title="Table I Errors",
-              titleStyle = TITLE_STYLE)
-# Add sub title
-xlsx.addTitle(sheet, rowIndex=3, 
-              title="Recap on the total number of rows in Table I with errors",
-              titleStyle = SUB_TITLE_STYLE)
+# errors.total <- fread('fdi_TABLE_I_errors.csv')
+# errors.total <- errors.total[,.(country,year,totfishdays)]
+# errors.total <- errors.total[, list(totfishdays = sum(totfishdays),
+#                                     nrows = nrow(.SD)),
+#                              by = .(country, year)]
+# errors.total[,totfishdays := round(totfishdays,0)]
+# errors.total <- setorder(errors.total,country)
+# names(errors.total) <- c("Country", "Year", "Fishing days", "Number of rows")
+# 
+# # Create a new sheet in the workbook
+# #++++++++++++++++++++++++++++++++++++
+# sheet <- createSheet(wb, sheetName = "Table I Errors")
+# 
+# xlsx.addTitle<-function(sheet, rowIndex, title, titleStyle){
+#   rows <-createRow(sheet,rowIndex=rowIndex)
+#   sheetTitle <-createCell(rows, colIndex=1)
+#   setCellValue(sheetTitle[[1,1]], title)
+#   setCellStyle(sheetTitle[[1,1]], titleStyle)
+# }
+# 
+# # Add title
+# xlsx.addTitle(sheet, rowIndex=1, title="Table I Errors",
+#               titleStyle = TITLE_STYLE)
+# # Add sub title
+# xlsx.addTitle(sheet, rowIndex=3, 
+#               title="Recap on the total number of rows in Table I with errors",
+#               titleStyle = SUB_TITLE_STYLE)
 # Add a table into a worksheet
 #++++++++++++++++++++++++++++++++++++
-addDataFrame(errors.total, sheet, startRow=5, startColumn=1,
-             row.names = F,
-             colnamesStyle = TABLE_COLNAMES_STYLE,
-             rownamesStyle = TABLE_ROWNAMES_STYLE)
-# Change column width
-setColumnWidth(sheet, colIndex=c(1:ncol(errors.total)), colWidth=16)
+# addDataFrame(errors.total, sheet, startRow=5, startColumn=1,
+#              row.names = F,
+#              colnamesStyle = TABLE_COLNAMES_STYLE,
+#              rownamesStyle = TABLE_ROWNAMES_STYLE)
+# # Change column width
+# setColumnWidth(sheet, colIndex=c(1:ncol(errors.total)), colWidth=16)
 
 # Create a new sheet in the workbook
 #++++++++++++++++++++++++++++++++++++
