@@ -1,12 +1,12 @@
 #-------------------------------------------------------------------------------
 #
 # Script to clean, analyse and map the spatial effort and spatial landings
-# datasets of the FDI EWG18-11 20190910 - 20180914
-# Tor 3 team : Maciej, Maksims, Maurizio, Tommaso (3MT). Every 
+# datasets of the FDI EWG21-12 20210913 - 20210917
+# Tor 3 team : Maciej, Maksims, Maurizio, Stefanos. Every 
 # contribution is highlighted.
-# Contact: maurizio.gibin@ec.europa.eu
+# Contact: maurizio.gibin@gmail.com
 #
-# Date: 2018-09-10 - 2018-09-14
+# Date: 2021-09-13 - 2021-09-17
 #
 #
 #-------------------------------------------------------------------------------
@@ -22,7 +22,7 @@ options(digits = 9)
 #- Clear workspace
 rm(list=ls())
 
-cDIR = '~/work/EWG-FDI-20-10'
+cDIR = '~/work/EWG-FDI-21-12'
 setwd(cDIR)
 #- Settings paths
 codePath         <- paste0(cDIR, "/scripts/")    # R scripts location
@@ -37,21 +37,61 @@ setwd(outPath)
 # We need to select the nuber of fields to keep and also made a recap on the number of rows and landings/effort we loose.
 # TABLE I Reporting ----
 setwd(paste0(outPath,'landings/'))
-tH <- list.files(path = '.', pattern = glob2rx("*table.H*.csv"))
-
+tH <- list.files(path = '.', pattern = glob2rx("*Table.H*.csv"))
+sort(tH)
+tH <- tH[!tH %like% '*gearNOT*']
+sort(tH)
+# We need to select the nuber of fHelds to keep and also made a recap on the number of rows and landHngs/effort we loose.
+# TABLE H ReportHng ----
+setwd(paste0(outPath,'landings/'))
 table.H.errors <- lapply(tH,fread)
 names(table.H.errors) <- tH
+names(table.H.errors)
+table.H.errors <- 
+  lapply(1:length(table.H.errors),function(x){
+    if (x!=12&&x!=13){  
+      n <- 6
+      countrylbl <- gsub('.csv','',substr(names(table.H.errors[x]), nchar(names(table.H.errors[x]))-n, nchar(names(table.H.errors[x]))))
+      DT <- rbindlist(table.H.errors[x])
+      DT[,country:=countrylbl]
+      return(DT)}
+    else{DT <- rbindlist(table.H.errors[x])
+    return(DT)}
+  })
+
+table.H.errors[12]
+names(table.H.errors) <- tH
+names(table.H.errors)[c(-12,-13)] <-   gsub('.{8}$','',names(table.H.errors)[c(-12,-13)])
+names(table.H.errors)[c(12,13)] <-   gsub('.csv$','',names(table.H.errors)[c(12,13)])
+table.H.errors = table.H.errors[order(names(table.H.errors))]
+
+names(table.H.errors)
+newnames <- c(names(table.H.errors[1]),
+              names(table.H.errors[2:11]),
+              names(table.H.errors[12]),
+              names(table.H.errors[13]),
+              names(table.H.errors[14:19]),
+              names(table.H.errors[20]))
+table.H.errors <- list( rbindlist(table.H.errors[1]),
+                        rbindlist(table.H.errors[2:11]),
+                        rbindlist(table.H.errors[12]),
+                        rbindlist(table.H.errors[13]),
+                        rbindlist(table.H.errors[14:19]),
+                        rbindlist(table.H.errors[20]))
+names(table.H.errors) <- unique(newnames)
+names(table.H.errors)
 # The third table is the  errors in unit weight that is already summarised,
 # while the others are not.
-errors.unit.weight <- table.H.errors[[1]]
-table.H.errors <- table.H.errors[-1]
-errors.unit.weight <-
-  errors.unit.weight[, list(totwghtlandg = sum(totwghtlandg),
-                           nrows = .N),
+errors.unit.weight <- table.H.errors[[3]]
+table.H.errors <- table.H.errors[-3]
+errors.unit.weight[,`:=` (totwghtlandg = round(sum(totwghtlandg,na.rm = T),0),
+                           totvallandg = round(sum(totvallandg,na.rm = T),0)
+                          #,nrows = .N)
+                          ),
                     by = .(country, year)]
 
-errors.unit.weight[,totwghtlandg:=round(totwghtlandg,0)]
-names(errors.unit.weight) <- c("Country", "Year", "Total Landings", "Number of rows")
+#errors.unit.weight[,totwghtlandg:=round(totwghtlandg,0)]
+names(errors.unit.weight) <- c("Country", "Year", "Total Landings Weight","Total Landings Value")
 
 wb<-createWorkbook(type="xlsx")
 
@@ -71,13 +111,14 @@ TABLE_COLNAMES_STYLE <- CellStyle(wb) + Font(wb, isBold=TRUE) +
 
 
 errors.total <- fread('fdi_TABLE_H_errors.csv')
-errors.total <- errors.total[,.(country,year,totwghtlandg)]
-errors.total <- errors.total[, list(totwghtlandg = sum(totwghtlandg),
+errors.total <- errors.total[,.(country,year,totwghtlandg,totvallandg)]
+errors.total <- errors.total[, list(totwghtlandg = round(sum(totwghtlandg,na.rm = T),0),
+                                    totvallandg = round(sum(totvallandg,na.rm = T),0),
                                     nrows = nrow(.SD)),
                              by = .(country, year)]
-errors.total[,totwghtlandg := round(totwghtlandg,0)]
 errors.total <- setorder(errors.total,country)
-names(errors.total) <- c("Country", "Year", "Total Landings", "Number of rows")
+names(errors.total) <- c("Country", "Year", "Total Landings Weight",
+                         "Total Landings Value","Number of rows")
 
 # Create a new sheet in the workbook
 #++++++++++++++++++++++++++++++++++++
@@ -135,15 +176,16 @@ setColumnWidth(sheet, colIndex=c(1:ncol(errors.unit.weight)), colWidth=16)
 # Add a plot into a worksheet
 # Create a new sheet in the workbook
 #++++++++++++++++++++++++++++++++++++
-missing.subregion <- table.H.errors[[2]]
-table.H.errors <- table.H.errors[-2]
+missing.subregion <- table.H.errors[[3]]
+table.H.errors <- table.H.errors[-3]
 missing.subregion <-
-  missing.subregion[, list(totwghtlandg = sum(totwghtlandg),
-                            nrows = .N),
+  missing.subregion[, list(totwghtlandg = round(sum(totwghtlandg,na.rm = T),0),
+                           totvallandg = round(sum(totvallandg,na.rm = T),0),
+                            nrows =nrow(.SD)),
                      by = .(country, year)]
 
-missing.subregion[,totwghtlandg:=round(totwghtlandg,0)]
-names(missing.subregion) <- c("Country", "Year", "Total Landings", "Number of rows")
+names(missing.subregion) <- c("Country", "Year", "Total Landings Weight",
+                              "Total Landings Value","Number of rows")
 
 sheet <- createSheet(wb, sheetName = "Table H Missing Subregion")
 
@@ -190,7 +232,8 @@ addTables <- function(table){
   sheetName    <- names(table) 
   table <- rbindlist(table)
   table[,totwghtlandg:=round(totwghtlandg,0)]
-  names(table) <-  c("Country", "Year", "Total Landings", "Number of rows")
+  table[,totvallandg:=round(totwghtlandg,0)]
+  names(table) <-  c("Country", "Year", "Total Landings Weight","Total Landings Value", "Number of rows")
   sheet <- createSheet(wb, sheetName = sheetName)
   xlsx.addTitle<-function(sheet, rowIndex, title, titleStyle){
     rows <-createRow(sheet,rowIndex=rowIndex)
@@ -216,11 +259,10 @@ addTables <- function(table){
 }
 
 # table.H.errors <- Map(cbind,table.H.errors,valid ="N")
-table.H.errors <- lapply(table.H.errors,function(x){return(x[,.(country,year,totwghtlandg)])})
-table.H.tables <- lapply(table.H.errors,function(x){return(x <- x[,list(totwghtlandg = sum(totwghtlandg),
-                                                                        nrows = nrow(.SD)),
+table.H.errors <- lapply(table.H.errors,function(x){return(x[,.(country,year,totwghtlandg,totvallandg)])})
+table.H.tables <- lapply(table.H.errors,function(x){return(x <- x[,list(totwghtlandg = round(sum(totwghtlandg,na.rm = T),0),totvallandg = round(sum(as.numeric(totvallandg),na.rm = T),0),                                                                      nrows = nrow(.SD)),
                                                                   by = .(country,year)])})
 
 lapply(1:length(table.H.tables),function(x){addTables(table.H.tables[x])})
 
-saveWorkbook(wb, "Table.H.checks.Tor.3.2.xlsx")
+saveWorkbook(wb, "Table.H.checks.Tor.3.3.xlsx")
