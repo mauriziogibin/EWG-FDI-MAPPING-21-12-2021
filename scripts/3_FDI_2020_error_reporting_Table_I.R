@@ -1,12 +1,12 @@
 #-------------------------------------------------------------------------------
 #
 # Script to clean, analyse and map the spatial effort and spatial landings
-# datasets of the FDI EWG20-10 20200914 - 20200918
-# Tor 3 team : Maciej, Maksims, Maurizio(3M). Every 
+# datasets of the FDI EWG21-12 20210913 - 20210917
+# Tor 3 team : Maciej, Maksims, Maurizio, Stefanos. Every 
 # contribution is highlighted.
-# Contact: maurizio.gibin@ec.europa.eu
+# Contact: maurizio.gibin@gmail.com
 #
-# Date: 2020-09-14 - 2020-09-18
+# Date: 2021-09-13 - 2021-09-17
 #
 #
 #-------------------------------------------------------------------------------
@@ -22,7 +22,7 @@ options(digits = 9)
 #- Clear workspace
 rm(list=ls())
 
-cDIR = '~/work/EWG-FDI-20-10'
+cDIR = '~/work/EWG-FDI-21-12'
 setwd(cDIR)
 #- Settings paths
 codePath         <- paste0(cDIR, "/scripts/")    # R scripts location
@@ -34,16 +34,49 @@ outPath          <- paste0(cDIR, "/output/")   # output
 # FDI DATA ----
 setwd(outPath)
 # 
-tI <- list.files(path = 'effort', pattern = glob2rx("*table.I*.csv"))
+tI <- list.files(path = 'effort', pattern = glob2rx("*Table.I*.csv"))
+sort(tI)
+tI <- tI[!tI %like% '*gearNOT*']
+sort(tI)
 # We need to select the nuber of fields to keep and also made a recap on the number of rows and landings/effort we loose.
 # TABLE I Reporting ----
 setwd(paste0(outPath,'effort/'))
 table.I.errors <- lapply(tI,fread)
 names(table.I.errors) <- tI
+table.I.errors <- 
+  lapply(1:length(table.I.errors),function(x){
+    if (x!=11){  
+    n <- 6
+    countrylbl <- gsub('.csv','',substr(names(table.I.errors[x]), nchar(names(table.I.errors[x]))-n, nchar(names(table.I.errors[x]))))
+    DT <- rbindlist(table.I.errors[x])
+    DT[,country:=countrylbl]
+    return(DT)}
+    else{NULL}
+})
+
+names(table.I.errors) <- tI
+names(table.I.errors)[-11] <-   gsub('.{8}$','',names(table.I.errors)[-11])
+names(table.I.errors)[11] <-   gsub('.csv$','',names(table.I.errors)[11])
+table.I.errors = table.I.errors[order(names(table.I.errors))]
+
+names(table.I.errors)
+newnames <- c(names(table.I.errors[1]),
+              names(table.I.errors[2]),
+              names(table.I.errors[3]),
+              names(table.I.errors[11]),
+              names(table.I.errors[12]),
+              names(table.I.errors[18]))
+table.I.errors <- list( rbindlist(table.I.errors[1]),
+                        rbindlist(table.I.errors[2]),
+                        rbindlist(table.I.errors[3:10]),
+                        rbindlist(table.I.errors[11]),
+                        rbindlist(table.I.errors[12:17]),
+                        rbindlist(table.I.errors[18]))
+names(table.I.errors) <- newnames
 # The first table is the missing subregion one that is already summarised,
 # while the others are not.
-missing.subregion <- table.I.errors[[2]]
-table.I.errors <- table.I.errors[-2]
+missing.subregion <- table.I.errors[[4]]
+table.I.errors <- table.I.errors[-4]
 missing.subregion <-
   missing.subregion[, list(totfishdays = sum(totfishdays),
                            nrows = sum(nrows)),
@@ -65,6 +98,7 @@ TITLE_STYLE <- CellStyle(wb)+ Font(wb,  heightInPoints=14,
 SUB_TITLE_STYLE <- CellStyle(wb) + 
   Font(wb,  heightInPoints=12,
        isItalic=TRUE, isBold=FALSE)
+
 # Styles for the data table row/column names
 TABLE_ROWNAMES_STYLE <- CellStyle(wb) + Font(wb, isBold=TRUE)
 TABLE_COLNAMES_STYLE <- CellStyle(wb) + Font(wb, isBold=TRUE) +
@@ -181,5 +215,4 @@ addTables <- function(table){
 
 lapply(1:length(table.I.tables),function(x){addTables(table.I.tables[x])})
 
-saveWorkbook(wb, "Table.I.checks.Tor.3.2.xlsx")
-  
+saveWorkbook(wb, "Table.I.checks.Tor.3.3.xlsx")
