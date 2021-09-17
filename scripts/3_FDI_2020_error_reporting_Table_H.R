@@ -110,19 +110,46 @@ TABLE_COLNAMES_STYLE <- CellStyle(wb) + Font(wb, isBold=TRUE) +
          pen=c("BORDER_THIN", "BORDER_THICK")) 
 
 
-errors.total <- fread('fdi_TABLE_H_errors.csv')
-errors.total <- errors.total[,.(country,year,totwghtlandg,totvallandg)]
-errors.total <- errors.total[, list(totwghtlandg = round(sum(totwghtlandg,na.rm = T),0),
-                                    totvallandg = round(sum(totvallandg,na.rm = T),0),
-                                    nrows = nrow(.SD)),
-                             by = .(country, year)]
-errors.total <- setorder(errors.total,country)
-names(errors.total) <- c("Country", "Year", "Total Landings Weight",
-                         "Total Landings Value","Number of rows")
+# errors.total <- fread('fdi_TABLE_H_errors.csv')
+# errors.total <- errors.total[,.(country,year,totwghtlandg,totvallandg)]
+# errors.total <- errors.total[, list(totwghtlandg = round(sum(totwghtlandg,na.rm = T),0),
+#                                     totvallandg = round(sum(totvallandg,na.rm = T),0),
+#                                     nrows = nrow(.SD)),
+#                              by = .(country, year)]
+# errors.total <- setorder(errors.total,country)
+# names(errors.total) <- c("Country", "Year", "Total Landings Weight",
+#                          "Total Landings Value","Number of rows")
 
 # Create a new sheet in the workbook
 #++++++++++++++++++++++++++++++++++++
-sheet <- createSheet(wb, sheetName = "Table H Errors")
+# sheet <- createSheet(wb, sheetName = "Table H Errors")
+# 
+# xlsx.addTitle<-function(sheet, rowIndex, title, titleStyle){
+#   rows <-createRow(sheet,rowIndex=rowIndex)
+#   sheetTitle <-createCell(rows, colIndex=1)
+#   setCellValue(sheetTitle[[1,1]], title)
+#   setCellStyle(sheetTitle[[1,1]], titleStyle)
+# }
+# 
+# # Add title
+# xlsx.addTitle(sheet, rowIndex=1, title="Table H Errors",
+#               titleStyle = TITLE_STYLE)
+# # Add sub title
+# xlsx.addTitle(sheet, rowIndex=3, 
+#               title="Recap on the number of rows in Table H with errors",
+#               titleStyle = SUB_TITLE_STYLE)
+# # Add a table into a worksheet
+# #++++++++++++++++++++++++++++++++++++
+# addDataFrame(errors.total, sheet, startRow=5, startColumn=1,
+#              row.names = F,
+#              colnamesStyle = TABLE_COLNAMES_STYLE,
+#              rownamesStyle = TABLE_ROWNAMES_STYLE)
+# # Change column width
+# setColumnWidth(sheet, colIndex=c(1:ncol(errors.total)), colWidth=16)
+
+# Create a new sheet in the workbook
+#++++++++++++++++++++++++++++++++++++
+sheet <- createSheet(wb, sheetName = "Table H Recap Table to check Unit Weight and Price")
 
 xlsx.addTitle<-function(sheet, rowIndex, title, titleStyle){
   rows <-createRow(sheet,rowIndex=rowIndex)
@@ -132,38 +159,11 @@ xlsx.addTitle<-function(sheet, rowIndex, title, titleStyle){
 }
 
 # Add title
-xlsx.addTitle(sheet, rowIndex=1, title="Table H Errors",
+xlsx.addTitle(sheet, rowIndex=1, title="Table H Recap Table to check Unit Weight and Price",
               titleStyle = TITLE_STYLE)
 # Add sub title
 xlsx.addTitle(sheet, rowIndex=3, 
-              title="Recap on the number of rows in Table H with errors",
-              titleStyle = SUB_TITLE_STYLE)
-# Add a table into a worksheet
-#++++++++++++++++++++++++++++++++++++
-addDataFrame(errors.total, sheet, startRow=5, startColumn=1,
-             row.names = F,
-             colnamesStyle = TABLE_COLNAMES_STYLE,
-             rownamesStyle = TABLE_ROWNAMES_STYLE)
-# Change column width
-setColumnWidth(sheet, colIndex=c(1:ncol(errors.total)), colWidth=16)
-
-# Create a new sheet in the workbook
-#++++++++++++++++++++++++++++++++++++
-sheet <- createSheet(wb, sheetName = "Table H Errors in Unit Weight")
-
-xlsx.addTitle<-function(sheet, rowIndex, title, titleStyle){
-  rows <-createRow(sheet,rowIndex=rowIndex)
-  sheetTitle <-createCell(rows, colIndex=1)
-  setCellValue(sheetTitle[[1,1]], title)
-  setCellStyle(sheetTitle[[1,1]], titleStyle)
-}
-
-# Add title
-xlsx.addTitle(sheet, rowIndex=1, title="Table H Errors in Unit Weight",
-              titleStyle = TITLE_STYLE)
-# Add sub title
-xlsx.addTitle(sheet, rowIndex=3, 
-              title="Recap on the number of rows in Table H with incorrect unit weight",
+              title="Summary Table for the Landings and Value",
               titleStyle = SUB_TITLE_STYLE)
 # Add a table into a worksheet
 #++++++++++++++++++++++++++++++++++++
@@ -201,7 +201,7 @@ xlsx.addTitle(sheet, rowIndex=1, title="Table H Missing Subregion",
               titleStyle = TITLE_STYLE)
 # Add sub title
 xlsx.addTitle(sheet, rowIndex=3, 
-              title="Recap on the number of rows in Table H with unknown Subregion",
+              title="Recap on the number of rows in Table H with missing Subregion",
               titleStyle = SUB_TITLE_STYLE)
 # Add a table into a worksheet
 #++++++++++++++++++++++++++++++++++++
