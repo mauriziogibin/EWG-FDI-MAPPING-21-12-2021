@@ -216,3 +216,11 @@ addTables <- function(table){
 lapply(1:length(table.I.tables),function(x){addTables(table.I.tables[x])})
 
 saveWorkbook(wb, "Table.I.checks.Tor.3.3.xlsx")
+
+table.i.total <- fread('../../data/table_i_total_valid_and_not.csv')
+# Number of non valid rows
+nrow(table.i.total[valid=='N',])
+# Percentage
+round((nrow(table.i.total[valid=='N',])/
+  nrow(table.i.total)*100),2)
+
