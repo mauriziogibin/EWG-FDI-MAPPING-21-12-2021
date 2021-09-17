@@ -406,15 +406,15 @@ fdi[,`:=`(totfishdays = V1,
 # SAVING ----
 setwd(dataF)
 save(fdi,file=paste("fdi_", i, ".RData", sep=''))
-#fdi_TABLE_I_errors <- fdi[valid == 'N']
+fdi_TABLE_I_errors <- fdi[valid == 'N']
 
 # SAVING ----
-#fwrite(fdi_TABLE_I_errors,'../output/fdi_TABLE_I_errors.csv')
+fwrite(fdi_TABLE_I_errors,'../output/fdi_TABLE_I_errors.csv')
 save(fdi.tableau,file = paste("fdi_Tableau_", i, ".RData", sep=''))
 
 rm(list=ls())
 gc()
+
 #fdi_table_i_errors <- fread('../output/fdi_TABLE_I_errors.csv')
 #fdi_table_i <- load('fdi_table.I.RData')
 #fdi_orig <- fread('table_i.csv')
-
