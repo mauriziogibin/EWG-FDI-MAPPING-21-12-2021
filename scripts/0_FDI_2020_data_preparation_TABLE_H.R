@@ -62,7 +62,8 @@ table.unit.weight.vallandg <- fdi[,.("totwghtlandg" = round(sum(totwghtlandg,na.
                                      by=.(country,year)]
 setorder(table.unit.weight.vallandg,country,year)
 # errors.unit.weightDT <- dcast(errors.unit.weight, country ~ year, value.var = "totwghtlandg")
-# fwrite(table.unit.weight.vallandg,paste0(outPath,'errors.unit.weight.value.Table.H.csv'))
+# 
+fwrite(table.unit.weight.vallandg,paste0(outPath,'Table.H.errors.unit.weight.value.csv'))
 
 # Number of NAs rectangle_type
 # na.rectangle_type<- fdi[is.na(rectangle_type),]
@@ -407,8 +408,7 @@ fdi <- fdi[, .("totwghtlandg" = sum(totwghtlandg, na.rm = T),
 setwd(dataF)
 save(fdi,file=paste("fdi_", i, ".RData", sep=''))
 
-# fdi_TABLE_H_errors <- fdi[valid == 'N']
-# fdi_TABLE_H_errors[,fwrite(.SD,paste0('../output/fdi_TABLE_H_errors','_',
-#                                      country,'.csv')),by=.(country)]
+fdi_TABLE_H_errors <- fdi[valid == 'N']
+fwrite(fdi_TABLE_H_errors,'../output/fdi_TABLE_H_errors.csv')
 rm(list=ls())
 gc()
