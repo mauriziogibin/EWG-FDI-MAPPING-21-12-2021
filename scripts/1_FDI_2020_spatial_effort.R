@@ -24,7 +24,6 @@ options(digits = 9)
 
 #- Clear workspace
 rm(list=ls())
-gc()
 #- Settings paths
 
 cDIR = '~/work/EWG-FDI-21-12'
@@ -64,7 +63,7 @@ setwd(dataF)
 #Assign fishing zones to the fdi data
 fdi <- left_join(fdi,fishing_zones,by="sub_region")
 fdi<-data.table(fdi)
-fwrite(fdi[sub_region=="NK",.(nrows=.N),by=.(country,year,confidential,totfishdays,valid)],paste0(outPath,"missing.subregion.table.I.csv"))
+fwrite(fdi[sub_region=="NK",.(nrows=.N),by=.(country,year,confidential,totfishdays,valid)],paste0(outPath,"Table.I.missing.subregion.csv"))
 
 #Remove rows with sub_region = NK and remove BSAs
 fdi<-fdi[!sub_region %in% c("NK","BSA")]
@@ -261,5 +260,5 @@ dir.create("effort/gears")
 dir.create("effort/specons")
 #library(filesstrings)
 fList <- list.files(path='.',patter=glob2rx('*I*.csv'))
-file.copy(fList,'./effort/')
+file.copy(fList,'./effort/',overwrite = T)
 file.remove(fList)
